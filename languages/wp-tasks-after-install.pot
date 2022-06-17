@@ -1,0 +1,44 @@
+# Copyright (C) 2017 WP Tasks After Install
+# This file is distributed under the same license as the WP Tasks After Install package.
+msgid ""
+msgstr ""
+"Project-Id-Version: WP Tasks After Install 1.0.4\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-tasks-after-install\n"
+"POT-Creation-Date: 2017-01-21 17:31:27+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2017-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: wp-tasks-after-install.php:66
+msgid "Uncategorized"
+msgstr ""
+
+#: wp-tasks-after-install.php:70
+msgid "Blog"
+msgstr ""
+
+#: wp-tasks-after-install.php:71
+msgid "blog"
+msgstr ""
+#. Plugin Name of the plugin/theme
+msgid "WP Tasks After Install"
+msgstr ""
+
+#. Plugin URI of the plugin/theme
+msgid "https://www.oscarabadfolgueira.com/plugins/wp-tasks-after-install"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid "Performs a number of necessary tasks after installing WordPress."
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "Oscar Abad Folgueira"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "http://www.oscarabadfolgueira.com/"
+msgstr ""
