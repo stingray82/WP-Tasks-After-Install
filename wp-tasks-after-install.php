@@ -5,7 +5,7 @@
  * Description: Performs a number of necessary tasks after installing WordPress.
  * Author: Oh Yeah Devs / Stingray82
  * Author URI: https://github.com/stingray82/WP-Tasks-After-Install
- * Version: 1.91
+ * Version: 1.92
  * License: GPLv2 or later
  * Text Domain: wp-tasks-after-install
  * Domain Path: /languages/
@@ -24,7 +24,8 @@ function oaf_wptai_i18n() {
 add_action( 'plugins_loaded', 'oaf_wptai_i18n' );
 
 add_action( 'admin_init', 'oaf_wptai_remove_default_post');
-add_action( 'admin_init', 'oaf_wptai_remove_default_page'); // Removed the privacy page
+add_action( 'admin_init', 'oaf_wptai_remove_default_page'); // Removed the privacy page //
+add_action( 'admin_init', 'oaf_wptai_time'); // Add Timezone to London and Date to UK Format i.e 17th June 2022
 add_action( 'admin_init', 'oaf_wptai_change_uncategorized');
 add_action( 'admin_init', 'oaf_wptai_set_permalink_postname' );
 add_action( 'admin_init', 'oaf_wptai_delete_plugins' );
@@ -94,6 +95,17 @@ function oaf_wptai_delete_plugins() {
 	delete_plugins( $plugins );
 	
 } // end of oaf_wptai_delete_plugins function.
+
+
+// Set Timezone & Date
+function oaf_wptai_time() {
+	update_option( 'timezone_string', 'Europe/London' );
+	update_option( 'date_format', 'j F Y' );
+	update_option( 'Site Language', 'j F Y' );
+	Site Language
+	
+} // end of oaf_wptai_time.
+
 
 // Disable comments, Search Enginees and trackbacks
 function oaf_wptai_disable_comments_and_pings() {
