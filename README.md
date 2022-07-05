@@ -7,3 +7,5 @@ Based on Oh Yeah Devs  WP Tasks After Install with the following added or modifi
 ### V1.921
 - Added Timezone to London/Europe
 - Added UK Date Format (17th June 2022)
+### V1.922
+- Added Removal of Jetpack as its autoinstalled @ instaWP and its annoying.
