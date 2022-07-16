@@ -91,8 +91,9 @@ function oaf_wptai_set_permalink_postname() {
 // remove hello world and akismet plugins
 function oaf_wptai_delete_plugins() {
 
-    $plugins = array( 'hello.php', 'jetpack/jetpack.php', 'akismet/akismet.php' );
-	delete_plugins( $plugins );
+    $plugins = array( 'hello.php', 'akismet/akismet.php' );
+
+  delete_plugins( $plugins );
 
 } // end of oaf_wptai_delete_plugins function.
 
@@ -103,9 +104,7 @@ function oaf_wptai_time() {
 	update_option( 'date_format', 'j F Y' );
 	update_option( 'Site Language', 'en_GB' );
 
-
 } // end of oaf_wptai_time.
-
 
 // Disable comments, Search Enginees and trackbacks
 function oaf_wptai_disable_comments_and_pings() {
