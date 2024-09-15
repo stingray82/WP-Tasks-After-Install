@@ -5,7 +5,7 @@
  * Description: Performs a number of necessary tasks after installing WordPress.
  * Author: Oh Yeah Devs / Stingray82
  * Author URI: https://github.com/stingray82/WP-Tasks-After-Install
- * Version: 1.922
+ * Version: 2.0
  * License: GPLv2 or later
  * Text Domain: wp-tasks-after-install
  * Domain Path: /languages/
@@ -33,8 +33,9 @@ add_action( 'admin_init', 'oaf_wptai_disable_comments_and_pings' ); // Search En
 add_action( 'admin_init', 'oaf_wptai_delete_config_sample_file' );
 add_action( 'admin_init', 'oaf_wptai_delete_readme_html_file' );
 add_action( 'admin_init', 'oaf_wptai_delete_themes' );
+add_action( 'admin_init', 'oaf_wptai_disable_thumbnail_sizes' );
+add_action( 'admin_init', 'oaf_wptai_media_settings' );
 add_action( 'admin_init', 'oaf_wptai_deactivate_this_plugin' );
-
 
 // Remove default post 'Hello Word'
 function oaf_wptai_remove_default_post() {
@@ -98,13 +99,18 @@ function oaf_wptai_delete_plugins() {
 } // end of oaf_wptai_delete_plugins function.
 
 
-// Set Timezone & Date
+// Set Timezone, Date, and Site Language - Modified 2.0
 function oaf_wptai_time() {
-	update_option( 'timezone_string', 'Europe/London' );
-	update_option( 'date_format', 'j F Y' );
-	update_option( 'Site Language', 'en_GB' );
-
-} // end of oaf_wptai_time.
+    update_option( 'timezone_string', 'Europe/London' );
+    update_option( 'date_format', 'j F Y' );
+    
+      // Set site language to British English (en_GB)
+    update_option( 'WPLANG', 'en_GB' ); // For older versions of WordPress (if applicable)
+    update_option( 'locale', 'en_GB' ); // For more modern versions of WordPress
+    
+    // Also ensure it's set in the general settings
+    update_option( 'site_language', 'en_GB' );
+} // end of oaf_wptai_time function.
 
 // Disable comments, Search Enginees and trackbacks
 function oaf_wptai_disable_comments_and_pings() {
@@ -181,6 +187,35 @@ function oaf_wptai_delete_themes() {
 
 } // end of oaf_wptai_delete_themes() function.
 
+
+// Disable all default thumbnail sizes and uncheck thumbnail cropping to exact dimensions added 2.0
+function oaf_wptai_disable_thumbnail_sizes() {
+    // Remove default image sizes
+    remove_image_size( 'thumbnail' );
+    remove_image_size( 'medium' );
+    remove_image_size( 'medium_large' );
+    remove_image_size( 'large' );
+    remove_image_size( '1536x1536' ); // Default WP size for high resolution
+    remove_image_size( '2048x2048' ); // Default WP size for high resolution
+
+    // Set default image sizes to 0 to prevent generation of these sizes
+    update_option( 'thumbnail_size_w', 0 );
+    update_option( 'thumbnail_size_h', 0 );
+    update_option( 'medium_size_w', 0 );
+    update_option( 'medium_size_h', 0 );
+    update_option( 'medium_large_size_w', 0 );
+    update_option( 'medium_large_size_h', 0 );
+    update_option( 'large_size_w', 0 );
+    update_option( 'large_size_h', 0 );
+
+    // Uncheck the crop to exact dimensions option
+    update_option( 'thumbnail_crop', 0 ); // 0 disables cropping, 1 enables cropping
+}
+
+
+
+
+
 // Deactivate this plugin.
 function oaf_wptai_deactivate_this_plugin() {
 
@@ -191,3 +226,12 @@ function oaf_wptai_deactivate_this_plugin() {
 	deactivate_plugins( plugin_basename( __FILE__ ) );
 
 } // end of oaf_wptai_deactivate_this_plugin() function.
+
+// Set media upload settings added 2.0
+function oaf_wptai_media_settings() {
+    // Disable cropping of large images
+    update_option( 'big_image_size_threshold', 0 );
+
+    // Disable automatic scaling of uploaded images
+    update_option( 'uploads_use_yearmonth_folders', 0 );
+}
