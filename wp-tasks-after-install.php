@@ -5,7 +5,7 @@
  * Description: Performs a number of necessary tasks after installing WordPress.
  * Author: Oh Yeah Devs / Stingray82
  * Author URI: https://github.com/stingray82/WP-Tasks-After-Install
- * Version: 2.0
+ * Version: 2.1
  * License: GPLv2 or later
  * Text Domain: wp-tasks-after-install
  * Domain Path: /languages/
@@ -89,10 +89,10 @@ function oaf_wptai_set_permalink_postname() {
 } // end of oaf_wptai_set_permalink_postname() function.
 
 
-// remove hello world and akismet plugins
+// remove hello world and akismet plugins // 08-11 Add to remove all the softacculous based plugins!
 function oaf_wptai_delete_plugins() {
 
-    $plugins = array( 'hello.php', 'akismet/akismet.php' );
+    $plugins = array( 'hello.php', 'akismet/akismet.php', 'backuply/backuply.php', 'backuply-pro/backuply-pro.php', 'gosmtp/gosmtp.php', 'gosmtp-pro/gosmtp-pro.php', 'loginizer/loginizer.php', 'loginizer-security/loginizer-security.php', 'pagelayer/pagelayer.php', 'pagelayer-pro/pagelayer-pro.php', 'siteseo/siteseo.php', 'siteseo-pro/siteseo-pro.php', 'softaculous-pro/softaculous-pro.php', 'speedycache/speedycache.php', 'speedycache-pro/speedycache-pro.php' );
 
   delete_plugins( $plugins );
 
