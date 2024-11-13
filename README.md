@@ -11,3 +11,5 @@ annoying.
  
 
 V2.1 Added removal of sofaculous spam
+
+V2.2 Added in Wordpress 6.7 remove welcome screen and pattern library

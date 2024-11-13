@@ -5,7 +5,7 @@
  * Description: Performs a number of necessary tasks after installing WordPress.
  * Author: Oh Yeah Devs / Stingray82
  * Author URI: https://github.com/stingray82/WP-Tasks-After-Install
- * Version: 2.1
+ * Version: 2.2
  * License: GPLv2 or later
  * Text Domain: wp-tasks-after-install
  * Domain Path: /languages/
@@ -36,6 +36,7 @@ add_action( 'admin_init', 'oaf_wptai_delete_themes' );
 add_action( 'admin_init', 'oaf_wptai_disable_thumbnail_sizes' );
 add_action( 'admin_init', 'oaf_wptai_media_settings' );
 add_action( 'admin_init', 'oaf_wptai_deactivate_this_plugin' );
+add_action( 'admin_init', 'oaf_wptai_disable_patten_guide' ); // Added in Wordpress 6.7 Toggle That Switch
 
 // Remove default post 'Hello Word'
 function oaf_wptai_remove_default_post() {
@@ -235,3 +236,51 @@ function oaf_wptai_media_settings() {
     // Disable automatic scaling of uploaded images
     update_option( 'uploads_use_yearmonth_folders', 0 );
 }
+
+//Added in Wordpress 6.7 remove welcome screen and pattern library
+function oaf_wptai_disable_patten_guide() {
+	global $wpdb;
+
+    // Retrieve all users
+    $users = get_users();
+
+    foreach ( $users as $user ) {
+        // Check and update persisted preferences
+        $meta_key = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT meta_key FROM {$wpdb->usermeta} WHERE user_id = %d AND meta_key LIKE %s",
+                $user->ID,
+                '%_persisted_preferences'
+            )
+        );
+
+        if ( ! $meta_key ) {
+            $meta_key = $wpdb->prefix . 'persisted_preferences';
+        }
+
+        $persisted_preference = get_user_meta( $user->ID, $meta_key, true );
+
+        if ( ! is_array( $persisted_preference ) ) {
+            $persisted_preference = array();
+        }
+
+        if ( ! isset( $persisted_preference['core'] ) ) {
+            $persisted_preference['core'] = array();
+        }
+        if ( ! isset( $persisted_preference['core/edit-post'] ) ) {
+            $persisted_preference['core/edit-post'] = array();
+        }
+
+        $persisted_preference['core']['isComplementaryAreaVisible'] = false;
+        $persisted_preference['core']['enableChoosePatternModal'] = false;
+        $persisted_preference['core/edit-post']['welcomeGuide'] = false;
+
+        $persisted_preference['_modified'] = gmdate( 'Y-m-d\TH:i:s.v\Z' );
+
+        update_user_meta( $user->ID, $meta_key, $persisted_preference );
+
+        // Add or update `show_welcome_panel`
+        update_user_meta( $user->ID, 'show_welcome_panel', 1 );
+    }
+}
+
