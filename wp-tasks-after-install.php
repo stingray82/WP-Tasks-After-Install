@@ -5,7 +5,7 @@
  * Description: Performs a number of necessary tasks after installing WordPress.
  * Author: Oh Yeah Devs / Stingray82
  * Author URI: https://github.com/stingray82/WP-Tasks-After-Install
- * Version: 2.2
+ * Version: 2.3
  * License: GPLv2 or later
  * Text Domain: wp-tasks-after-install
  * Domain Path: /languages/
@@ -33,10 +33,12 @@ add_action( 'admin_init', 'oaf_wptai_disable_comments_and_pings' ); // Search En
 add_action( 'admin_init', 'oaf_wptai_delete_config_sample_file' );
 add_action( 'admin_init', 'oaf_wptai_delete_readme_html_file' );
 add_action( 'admin_init', 'oaf_wptai_delete_themes' );
+add_action('plugins_loaded', 'oaf_wptai_disable_screen_options_preserve'); // Disable Screen Options
 add_action( 'admin_init', 'oaf_wptai_disable_thumbnail_sizes' );
 add_action( 'admin_init', 'oaf_wptai_media_settings' );
-add_action( 'admin_init', 'oaf_wptai_deactivate_this_plugin' );
 add_action( 'admin_init', 'oaf_wptai_disable_patten_guide' ); // Added in Wordpress 6.7 Toggle That Switch
+add_action('init', 'oaf_wptai_disable_avatars_in_discussion_settings'); // Disable Avatars
+add_action( 'admin_init', 'oaf_wptai_deactivate_this_plugin' );
 
 // Remove default post 'Hello Word'
 function oaf_wptai_remove_default_post() {
@@ -92,12 +94,41 @@ function oaf_wptai_set_permalink_postname() {
 
 // remove hello world and akismet plugins // 08-11 Add to remove all the softacculous based plugins!
 function oaf_wptai_delete_plugins() {
+    // List of plugins to check, deactivate, and delete
+    $plugins = array(
+    	// Base Install / InstaWP
+        'hello.php',
+        'akismet/akismet.php',
+        // Softaccilous Spam
+        'backuply/backuply.php',
+        'backuply-pro/backuply-pro.php',
+        'gosmtp/gosmtp.php',
+        'gosmtp-pro/gosmtp-pro.php',
+        'loginizer/loginizer.php',
+        'loginizer-security/loginizer-security.php',
+        'pagelayer/pagelayer.php',
+        'pagelayer-pro/pagelayer-pro.php',
+        'siteseo/siteseo.php',
+        'siteseo-pro/siteseo-pro.php',
+        'softaculous-pro/softaculous-pro.php',
+        'speedycache/speedycache.php',
+        'speedycache-pro/speedycache-pro.php',
+        'fileorganizer/fileorganizer.php',
+        'fileorganizer-pro/fileorganizer-pro.php',
+    );
 
-    $plugins = array( 'hello.php', 'akismet/akismet.php', 'backuply/backuply.php', 'backuply-pro/backuply-pro.php', 'gosmtp/gosmtp.php', 'gosmtp-pro/gosmtp-pro.php', 'loginizer/loginizer.php', 'loginizer-security/loginizer-security.php', 'pagelayer/pagelayer.php', 'pagelayer-pro/pagelayer-pro.php', 'siteseo/siteseo.php', 'siteseo-pro/siteseo-pro.php', 'softaculous-pro/softaculous-pro.php', 'speedycache/speedycache.php', 'speedycache-pro/speedycache-pro.php' );
+    include_once( ABSPATH . 'wp-admin/includes/plugin.php' ); // Include the plugin functions file
 
-  delete_plugins( $plugins );
+    foreach ( $plugins as $plugin ) {
+        if ( is_plugin_active( $plugin ) ) {
+            deactivate_plugins( $plugin ); // Deactivate the plugin if it's active
+        }
+    }
 
-} // end of oaf_wptai_delete_plugins function.
+    // After deactivation, delete the plugins
+    delete_plugins( $plugins );
+} // End of oaf_wptai_delete_plugins function
+
 
 
 // Set Timezone, Date, and Site Language - Modified 2.0
@@ -284,3 +315,40 @@ function oaf_wptai_disable_patten_guide() {
     }
 }
 
+// 2.3 Hide widgets and Disable Avatars 
+// Disable individual screen options for all users while preserving existing hidden widgets + Welcome Panel
+function oaf_wptai_disable_screen_options_preserve() {
+    $users = get_users();
+
+    // Widgets to hide
+    $hidden_widgets = array(
+        'dashboard_activity',
+        'dashboard_quick_press',
+        'dashboard_site_health',
+        'dashboard_right_now',
+        'dashboard_primary',
+    );
+
+    foreach ( $users as $user ) {
+        $user_id = $user->ID;
+
+        // Update hidden dashboard widgets
+        $current_hidden = get_user_meta( $user_id, 'metaboxhidden_dashboard', true ) ?: [];
+        $updated_hidden = array_unique( array_merge( $current_hidden, $hidden_widgets ) );
+        update_user_meta( $user_id, 'metaboxhidden_dashboard', $updated_hidden );
+        
+        // Issues with persistant showing so lets delete and then re-add
+        // Delete the meta key first to ensure it gets updated
+        delete_user_meta( $user_id, 'show_welcome_panel' );
+
+        // Add the meta key with the desired value
+        update_user_meta( $user_id, 'show_welcome_panel', '0' ); // this doesn't work there must be something that persists that requires login which means this plugin may not be able to do it
+
+    }
+}
+
+
+function oaf_wptai_disable_avatars_in_discussion_settings() {
+    // Update the 'show_avatars' option to '0' (disabled)
+    update_option('show_avatars', 0);
+}
