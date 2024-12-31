@@ -256,6 +256,10 @@ function oaf_wptai_deactivate_this_plugin() {
 	}
 
 	deactivate_plugins( plugin_basename( __FILE__ ) );
+    
+      // Delete this plugin
+    $plugin_file = plugin_basename(__FILE__); // Get the plugin's relative path
+    delete_plugins([$plugin_file]);
 
 } // end of oaf_wptai_deactivate_this_plugin() function.
 
