@@ -20,3 +20,6 @@ to be logged into dismiss I will continue looking for a way to do this
 
 V2.3.1 Plugin now Self Deletes once it is finished, no need to manually delete
 it now
+
+V2.3.2 - Added an additional flush_rewrite_rules(); to the permalink changes so
+they are saved and active

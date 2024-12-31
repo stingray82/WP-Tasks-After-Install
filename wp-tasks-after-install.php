@@ -5,7 +5,7 @@
  * Description: Performs a number of necessary tasks after installing WordPress.
  * Author: Oh Yeah Devs / Stingray82
  * Author URI: https://github.com/stingray82/WP-Tasks-After-Install
- * Version: 2.31
+ * Version: 2.32
  * License: GPLv2 or later
  * Text Domain: wp-tasks-after-install
  * Domain Path: /languages/
@@ -88,6 +88,7 @@ function oaf_wptai_set_permalink_postname() {
 
     global $wp_rewrite;
     $wp_rewrite->set_permalink_structure( '/%postname%/' );
+    flush_rewrite_rules(); // Added in 2.32 to try and save having to keep saving permalinks
 
 } // end of oaf_wptai_set_permalink_postname() function.
 
