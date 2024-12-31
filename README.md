@@ -17,3 +17,6 @@ V2.2 Added in Wordpress 6.7 remove welcome screen and pattern library
 V.2.3 Added additional Softaculous plugin removal, added disable avatars and
 removed screen options for all but Welcome - the welcome persists as it requires
 to be logged into dismiss I will continue looking for a way to do this
+
+V2.3.1 Plugin now Self Deletes once it is finished, no need to manually delete
+it now
