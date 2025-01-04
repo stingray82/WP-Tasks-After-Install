@@ -32,7 +32,7 @@ V2.4 Several Improvements & Bug Fixes
 
 -   Fixed Welcome Screen Persistence
 
--   added  `dashboard_rediscache` to hidden screen options as its auto installed
+-   added `dashboard_rediscache` to hidden screen options as its auto installed
     by GridPane
 
 -   Removed support for older WPLANG
@@ -43,6 +43,10 @@ V2.4 Several Improvements & Bug Fixes
 -   Added a Link to original WordPress Repo Version
 
 -   Change Author Information to show I manage this repo not Oh Yeah Devs
+
+ 
+
+V2.41 Added back thumbnail to backend
 
  
 
