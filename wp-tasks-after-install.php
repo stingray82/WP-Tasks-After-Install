@@ -5,7 +5,7 @@
  * Description: Performs a number of necessary tasks after installing WordPress.
  * Author: Stingray82 / Oh Yeah Devs 
  * Author URI: https://github.com/stingray82/WP-Tasks-After-Install
- * Version: 2.41
+ * Version: 2.4
  * License: GPLv2 or later
  * Text Domain: wp-tasks-after-install
  * Domain Path: /languages/
@@ -248,10 +248,9 @@ function oaf_wptai_delete_themes() {
 
 
 // Disable all default thumbnail sizes and uncheck thumbnail cropping to exact dimensions added 2.0
-// 2.41 Added Back Thumbnail causing to many issues on generation
 function oaf_wptai_disable_thumbnail_sizes() {
     // Remove default image sizes
-    //remove_image_size( 'thumbnail' );
+    remove_image_size( 'thumbnail' );
     remove_image_size( 'medium' );
     remove_image_size( 'medium_large' );
     remove_image_size( 'large' );
@@ -259,8 +258,8 @@ function oaf_wptai_disable_thumbnail_sizes() {
     remove_image_size( '2048x2048' ); // Default WP size for high resolution
 
     // Set default image sizes to 0 to prevent generation of these sizes
-    //update_option( 'thumbnail_size_w', 0 );
-    //update_option( 'thumbnail_size_h', 0 );
+    update_option( 'thumbnail_size_w', 0 );
+    update_option( 'thumbnail_size_h', 0 );
     update_option( 'medium_size_w', 0 );
     update_option( 'medium_size_h', 0 );
     update_option( 'medium_large_size_w', 0 );
