@@ -3,13 +3,15 @@
  * Plugin Name: WP Tasks After Install Modified
  * Plugin URI: https://github.com/stingray82/WP-Tasks-After-Install
  * Description: Performs a number of necessary tasks after installing WordPress.
- * Author: Oh Yeah Devs / Stingray82
+ * Author: Stingray82 / Oh Yeah Devs 
  * Author URI: https://github.com/stingray82/WP-Tasks-After-Install
- * Version: 2.32
+ * Version: 2.4
  * License: GPLv2 or later
  * Text Domain: wp-tasks-after-install
  * Domain Path: /languages/
  */
+
+/* This plugin is based on the original plugin here  * Based on https://wordpress.org/plugins/wp-tasks-after-install it has been very heavily modified and updated */
 
 // Go away!!
 if ( ! defined( 'WPINC' ) ) {
@@ -68,7 +70,7 @@ function oaf_wptai_remove_default_page() {
 } // end of oaf_wptai_remove_default_page() function
 
 
-// Change the name and slug of default category to news
+// Change the name and slug of default category to General
 function oaf_wptai_change_uncategorized() {
 
 	$term = term_exists( __('Uncategorized', 'wp-tasks-after-install', 'wp-tai'), 'category'); // check if 'uncategorized' category exists
@@ -133,17 +135,41 @@ function oaf_wptai_delete_plugins() {
 
 
 // Set Timezone, Date, and Site Language - Modified 2.0
+/* Version 2.33 Removed Legacy WPLANG and Update Options override's Will now actually download and install lanaguage pack and then set it up for you as instructed and then if successful it will switch update the option and then switch the locale as needed */
 function oaf_wptai_time() {
+    // Set timezone and date format
     update_option( 'timezone_string', 'Europe/London' );
     update_option( 'date_format', 'j F Y' );
-    
-      // Set site language to British English (en_GB)
-    update_option( 'WPLANG', 'en_GB' ); // For older versions of WordPress (if applicable)
-    update_option( 'locale', 'en_GB' ); // For more modern versions of WordPress
-    
-    // Also ensure it's set in the general settings
-    update_option( 'site_language', 'en_GB' );
+
+    // Desired language locale
+    $new_locale = 'en_GB';
+
+    // Ensure the translation functions are available
+    if ( ! function_exists( 'wp_download_language_pack' ) ) {
+        require_once ABSPATH . 'wp-admin/includes/translation-install.php';
+    }
+
+    // Check if the language pack is already installed
+    if ( ! in_array( $new_locale, get_available_languages(), true ) ) {
+        // Download the language pack if not installed
+        $downloaded = wp_download_language_pack( $new_locale );
+
+        if ( ! $downloaded ) {
+            // Log or handle the error if download fails
+            error_log( "Failed to download the language pack for locale: $new_locale." );
+
+            return;
+        }
+    }
+
+    // Update the 'WPLANG' option in the database
+    update_option( 'WPLANG', $new_locale );
+
+    // Ensure the new locale is loaded immediately
+    switch_to_locale( $new_locale );
 } // end of oaf_wptai_time function.
+
+
 
 // Disable comments, Search Enginees and trackbacks
 function oaf_wptai_disable_comments_and_pings() {
@@ -246,9 +272,6 @@ function oaf_wptai_disable_thumbnail_sizes() {
 }
 
 
-
-
-
 // Deactivate this plugin.
 function oaf_wptai_deactivate_this_plugin() {
 
@@ -316,12 +339,13 @@ function oaf_wptai_disable_patten_guide() {
         update_user_meta( $user->ID, $meta_key, $persisted_preference );
 
         // Add or update `show_welcome_panel`
-        update_user_meta( $user->ID, 'show_welcome_panel', 1 );
+        update_user_meta( $user->ID, 'show_welcome_panel', 0 ); // Updated V2.33
     }
 }
 
 // 2.3 Hide widgets and Disable Avatars 
 // Disable individual screen options for all users while preserving existing hidden widgets + Welcome Panel
+// 2.33 Added 'dashboard_rediscache' for GridPane for that Clean Look
 function oaf_wptai_disable_screen_options_preserve() {
     $users = get_users();
 
@@ -332,6 +356,7 @@ function oaf_wptai_disable_screen_options_preserve() {
         'dashboard_site_health',
         'dashboard_right_now',
         'dashboard_primary',
+        'dashboard_rediscache',
     );
 
     foreach ( $users as $user ) {
@@ -347,7 +372,7 @@ function oaf_wptai_disable_screen_options_preserve() {
         delete_user_meta( $user_id, 'show_welcome_panel' );
 
         // Add the meta key with the desired value
-        update_user_meta( $user_id, 'show_welcome_panel', '0' ); // this doesn't work there must be something that persists that requires login which means this plugin may not be able to do it
+        update_user_meta( $user_id, 'show_welcome_panel', '0' ); // This now Works as intended 2.33
 
     }
 }
