@@ -1,15 +1,19 @@
 <?php
 /**
- * Plugin Name: WP Tasks After Install Modified
- * Plugin URI: https://github.com/stingray82/WP-Tasks-After-Install
- * Description: Performs a number of necessary tasks after installing WordPress.
- * Author: Stingray82 / Oh Yeah Devs 
- * Author URI: https://github.com/stingray82/WP-Tasks-After-Install
- * Version: 2.4
- * License: GPLv2 or later
- * Text Domain: wp-tasks-after-install
- * Domain Path: /languages/
- */
+ * Plugin Name:       WP Tasks After Install Modified
+ * Tested up to:      6.7.2
+ * Description:       Performs a number of necessary tasks after installing WordPress.
+ * Requires at least: 6.5
+ * Requires PHP:      7.4
+ * Version:           2.4
+ * Author:            Stingray82 / Oh Yeah Devs
+ * Author URI:        https://github.com/stingray82/WP-Tasks-After-Install
+ * License:           GPLv2 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:       wp-tasks-after-install
+ * Website:           https://reallyusefulplugins.com
+ * */
+
 
 /* This plugin is based on the original plugin here  * Based on https://wordpress.org/plugins/wp-tasks-after-install it has been very heavily modified and updated */
 
