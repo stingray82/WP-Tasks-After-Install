@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name:       WP Tasks After Install Modified
- * Tested up to:      6.7.2
+ * Tested up to:      6.8.2
  * Description:       Performs a number of necessary tasks after installing WordPress.
  * Requires at least: 6.5
  * Requires PHP:      7.4
- * Version:           2.4
+ * Version:           2.5
  * Author:            Stingray82 / Oh Yeah Devs
  * Author URI:        https://github.com/stingray82/WP-Tasks-After-Install
  * License:           GPLv2 or later
@@ -45,6 +45,7 @@ add_action( 'admin_init', 'oaf_wptai_media_settings' );
 add_action( 'admin_init', 'oaf_wptai_disable_patten_guide' ); // Added in Wordpress 6.7 Toggle That Switch
 add_action('init', 'oaf_wptai_disable_avatars_in_discussion_settings'); // Disable Avatars
 add_action( 'admin_init', 'oaf_wptai_deactivate_this_plugin' );
+add_action( 'admin_init', 'oaf_wptai_write_config_constants' ); // Writes to WP Config or User Config on Gridpane
 
 // Remove default post 'Hello Word'
 function oaf_wptai_remove_default_post() {
@@ -385,4 +386,160 @@ function oaf_wptai_disable_screen_options_preserve() {
 function oaf_wptai_disable_avatars_in_discussion_settings() {
     // Update the 'show_avatars' option to '0' (disabled)
     update_option('show_avatars', 0);
+}
+
+
+
+
+// Write license constants to GridPane user-configs.php if present, else wp-config.php
+function oaf_wptai_write_config_constants() {
+    if ( ! is_admin() || ! current_user_can( 'manage_options' ) ) {
+        return;
+    }
+
+    /**
+     * ------------------------------
+     * 1. Recommended (Environment Variables)
+     * ------------------------------
+     * Pull secrets from env vars so they're not in git history.
+     * Set these in your hosting panel / PHP-FPM pool / .env loader.
+     */
+    $constants_env = array(
+        /*
+        'ACF_PRO_LICENSE'      => getenv( 'ACF_PRO_LICENSE' ),
+        'GRAVITYFORMS_LICENSE' => getenv( 'GRAVITYFORMS_LICENSE' ),
+        'WP_ROCKET_KEY'        => getenv( 'WP_ROCKET_KEY' ),
+        'WPMAIL_SMTP_LICENSE'  => getenv( 'WPMAIL_SMTP_LICENSE' ),
+        */
+    );
+
+    /**
+     * ------------------------------
+     * 2. Example (Directly Committed)
+     * ------------------------------
+     * ⚠️ These are dummy values for demonstration only.
+     * You can hardcode if you're not concerned about secrets in the repo.
+     */
+    $constants_direct = array(
+        /*
+        'EXAMPLE_LICENSE_1' => '1234-5678-ABCD-EFGH',
+        'EXAMPLE_LICENSE_2' => 'demo-key-goes-here',
+        */
+    );
+
+    // Merge both, with env vars taking priority if set
+    $constants = array_merge( $constants_direct, array_filter( $constants_env ) );
+
+    if ( empty( $constants ) ) {
+        return;
+    }
+
+    $paths = oaf_wptai_locate_config_paths();
+
+    // Combine contents of existing files to check if constants already defined
+    $all_contents = '';
+    foreach ( $paths['existing'] as $p ) {
+        if ( file_exists( $p ) && is_readable( $p ) ) {
+            $all_contents .= "\n" . (string) @file_get_contents( $p );
+        }
+    }
+
+    $lines = array();
+    foreach ( $constants as $name => $value ) {
+        if ( $value === null || $value === '' ) {
+            continue;
+        }
+        $pattern = '/\bdefine\s*\(\s*[\'"]' . preg_quote( $name, '/' ) . '[\'"]\s*,/i';
+        if ( preg_match( $pattern, $all_contents ) ) {
+            continue; // already exists
+        }
+        $escaped = str_replace( array( '\\', "'" ), array( '\\\\', "\\'" ), (string) $value );
+        $lines[] = "define( '{$name}', '{$escaped}' );";
+    }
+    if ( empty( $lines ) ) {
+        return;
+    }
+
+    $target = $paths['target'];
+    if ( ! $target || ! file_exists( $target ) || ! is_writable( $target ) ) {
+        return;
+    }
+
+    $begin_marker = "// BEGIN WP Tasks After Install – License Constants";
+    $end_marker   = "// END WP Tasks After Install – License Constants";
+
+    $block = $begin_marker . PHP_EOL
+           . implode( PHP_EOL, $lines ) . PHP_EOL
+           . $end_marker . PHP_EOL;
+
+    $contents = file_get_contents( $target );
+    if ( $contents === false ) {
+        return;
+    }
+
+    // Remove prior block
+    $contents = preg_replace(
+        '/' . preg_quote( $begin_marker, '/' ) . '.*?' . preg_quote( $end_marker, '/' ) . '\s*/s',
+        '',
+        $contents
+    );
+
+    if ( $paths['is_gridpane'] ) {
+        // Append to user-configs.php
+        if ( preg_match( '/\?>\s*$/', $contents ) ) {
+            $contents = preg_replace( '/\?>\s*$/', PHP_EOL . $block . '?>' . PHP_EOL, $contents, 1 );
+        } else {
+            $contents = rtrim( $contents ) . PHP_EOL . PHP_EOL . $block;
+            if ( strpos( ltrim( $contents ), '<?php' ) !== 0 ) {
+                $contents = "<?php\n" . $contents;
+            }
+        }
+    } else {
+        // Insert before "That's all, stop editing!"
+        $stop_regex = '/^[ \t]*\/\*+\s*That\'s all, stop editing!.*?\*+\/\s*$/mi';
+        if ( preg_match( $stop_regex, $contents, $m, PREG_OFFSET_CAPTURE ) ) {
+            $pos    = $m[0][1];
+            $before = substr( $contents, 0, $pos );
+            $after  = substr( $contents, $pos );
+            $contents = rtrim( $before ) . PHP_EOL . $block . PHP_EOL . ltrim( $after );
+        } else {
+            $contents = rtrim( $contents ) . PHP_EOL . PHP_EOL . $block;
+        }
+    }
+
+    // Backup + write
+    $backup_path = $target . '.' . gmdate( 'Ymd-His' ) . '.bak';
+    @copy( $target, $backup_path );
+
+    $tmp = $target . '.tmp-' . wp_generate_password( 8, false, false );
+    $ok  = ( false !== file_put_contents( $tmp, $contents ) ) && @rename( $tmp, $target );
+    if ( ! $ok ) {
+        @unlink( $tmp );
+    }
+}
+
+function oaf_wptai_locate_config_paths() {
+    $roots = array( ABSPATH, dirname( ABSPATH ) . '/' );
+    $user_configs = array_map( fn($r) => rtrim($r,'/') . '/user-configs.php', $roots );
+    $wp_configs   = array_map( fn($r) => rtrim($r,'/') . '/wp-config.php', $roots );
+
+    foreach ( $user_configs as $uc ) {
+        if ( file_exists( $uc ) && is_writable( $uc ) ) {
+            return array(
+                'target'     => $uc,
+                'is_gridpane'=> true,
+                'existing'   => array_merge( $user_configs, $wp_configs ),
+            );
+        }
+    }
+    foreach ( $wp_configs as $wc ) {
+        if ( file_exists( $wc ) && is_writable( $wc ) ) {
+            return array(
+                'target'     => $wc,
+                'is_gridpane'=> false,
+                'existing'   => array_merge( $user_configs, $wp_configs ),
+            );
+        }
+    }
+    return array( 'target' => false, 'is_gridpane' => false, 'existing' => array_merge( $user_configs, $wp_configs ) );
 }
