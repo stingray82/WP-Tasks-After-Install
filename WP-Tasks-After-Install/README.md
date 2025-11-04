@@ -44,6 +44,28 @@ V2.4 Several Improvements & Bug Fixes
 
 -   Change Author Information to show I manage this repo not Oh Yeah Devs
 
+V2.5 Added Ability to write license constants
+
+Added Functions to allow writing licensing constants to your user-config (Grid pane) or your WP-Config everywhere else
+
+Supports env file for forks and also supports direct integration
+
+V2.6  Add new ability to replace plugins on run either by hardcoding them or using a filter
+
+Example below for replacing nginx-helper with one without the load-textdomain issue on gridpane
+
+```
+add_filter( 'oaf_wptai_plugin_replacements', function( $items ) {
+    $items[] = array(
+        'target'   => 'nginx-helper/nginx-helper.php',
+        'zip'      => 'https://github.com/stingray82/nginx-helper/releases/latest/download/nginx-helper.zip',
+        'activate' => true,
+        'force'    => false,
+    );
+    return $items;
+});
+```
+
  
 
 **Note: As it stands with regards to this plugin I am out of ideas and tasks to

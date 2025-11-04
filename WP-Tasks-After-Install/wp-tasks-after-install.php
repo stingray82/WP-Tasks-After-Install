@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name:       WP Tasks After Install Modified
- * Tested up to:      6.8.2
+ * Tested up to:      6.8.3
  * Description:       Performs a number of necessary tasks after installing WordPress.
  * Requires at least: 6.5
  * Requires PHP:      7.4
- * Version:           2.5
+ * Version:           2.6
  * Author:            Stingray82 / Oh Yeah Devs
  * Author URI:        https://github.com/stingray82/WP-Tasks-After-Install
  * License:           GPLv2 or later
@@ -13,6 +13,7 @@
  * Text Domain:       wp-tasks-after-install
  * Website:           https://reallyusefulplugins.com
  * */
+
 
 
 /* This plugin is based on the original plugin here  * Based on https://wordpress.org/plugins/wp-tasks-after-install it has been very heavily modified and updated */
@@ -44,8 +45,9 @@ add_action( 'admin_init', 'oaf_wptai_disable_thumbnail_sizes' );
 add_action( 'admin_init', 'oaf_wptai_media_settings' );
 add_action( 'admin_init', 'oaf_wptai_disable_patten_guide' ); // Added in Wordpress 6.7 Toggle That Switch
 add_action('init', 'oaf_wptai_disable_avatars_in_discussion_settings'); // Disable Avatars
-add_action( 'admin_init', 'oaf_wptai_deactivate_this_plugin' );
 add_action( 'admin_init', 'oaf_wptai_write_config_constants' ); // Writes to WP Config or User Config on Gridpane
+add_action( 'admin_init', 'oaf_wptai_replace_plugins_batch', 5 ); // Batch Replace Plugins
+add_action( 'admin_init', 'oaf_wptai_deactivate_this_plugin', 999 ); // deactivate
 
 // Remove default post 'Hello Word'
 function oaf_wptai_remove_default_post() {
@@ -515,3 +517,164 @@ function oaf_wptai_locate_config_paths() {
     }
     return array('target'=>false,'is_gridpane'=>false,'existing'=>array_merge($user_configs,$wp_configs));
 }
+
+/**
+ * Install/replace a single plugin from a ZIP URL.
+ *
+ * @param string $target_slug  Plugin main file path, e.g. 'nginx-helper/nginx-helper.php'.
+ * @param string $zip_url      Direct URL to a plugin .zip.
+ * @param bool   $activate     Activate after install (default: true).
+ * @param bool   $force        Ignore per-site "already done" guard (default: false).
+ * @return array               ['ok'=>bool, 'status'=>string, 'error'=>string|null]
+ */
+function oaf_wptai_install_or_replace_plugin( $target_slug, $zip_url, $activate = true, $force = false ) {
+    if ( ! is_admin() || ! current_user_can( 'install_plugins' ) ) {
+        return array('ok'=>false,'status'=>'not_allowed','error'=>null);
+    }
+
+    // Per-plugin once-only guard - If wanted
+    /*
+    $done = get_option( 'oaf_wptai_replaced_plugins', array() );
+    if ( ! is_array( $done ) ) $done = array();
+
+    if ( ! $force && ! empty( $done[ $target_slug ] ) ) {
+        return array('ok'=>true,'status'=>'skipped_already_done','error'=>null);
+    } 
+    */
+
+    // Make sure core APIs are available
+    require_once ABSPATH . 'wp-admin/includes/plugin.php';
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+
+    // Deactivate if active
+    if ( is_plugin_active( $target_slug ) ) {
+        deactivate_plugins( $target_slug, true );
+    }
+
+    // Delete existing plugin folder if present
+    // Using core delete helper is safest
+    if ( file_exists( WP_PLUGIN_DIR . '/' . dirname( $target_slug ) ) ) {
+        $del_result = delete_plugins( array( $target_slug ) );
+        if ( is_wp_error( $del_result ) ) {
+            return array('ok'=>false,'status'=>'delete_failed','error'=>$del_result->get_error_message());
+        }
+    }
+
+    // Ensure FS is ready
+    if ( ! WP_Filesystem() ) {
+        return array('ok'=>false,'status'=>'fs_not_ready','error'=>'Filesystem credentials required');
+    }
+
+    // Install from ZIP
+    $skin     = new Automatic_Upgrader_Skin();
+    $upgrader = new Plugin_Upgrader( $skin );
+    $result   = $upgrader->install( $zip_url );
+
+    if ( is_wp_error( $result ) ) {
+        return array('ok'=>false,'status'=>'install_failed','error'=>$result->get_error_message());
+    }
+    if ( ! $result ) {
+        return array('ok'=>false,'status'=>'install_failed','error'=>'Unknown install failure');
+    }
+
+    // Try to detect the installed plugin file to activate.
+    // Prefer the requested target path; if it doesn't exist, fall back to upgrader->plugin_info()
+    $activate_file = $target_slug;
+    if ( ! file_exists( WP_PLUGIN_DIR . '/' . $activate_file ) ) {
+        if ( ! empty( $upgrader->plugin_info() ) ) {
+            $activate_file = $upgrader->plugin_info();
+        }
+    }
+
+    // Activate
+    if ( $activate && $activate_file ) {
+        $act = activate_plugin( $activate_file );
+        if ( is_wp_error( $act ) ) {
+            // Mark installed but not activated so we don't loop forever
+            $done[ $target_slug ] = array(
+                'ts'     => time(),
+                'status' => 'installed_not_activated',
+                'zip'    => $zip_url,
+                'error'  => $act->get_error_message(),
+            );
+            //update_option( 'oaf_wptai_replaced_plugins', $done, false );
+            return array('ok'=>false,'status'=>'activated_failed','error'=>$act->get_error_message());
+        }
+    }
+
+    // Success
+    $done[ $target_slug ] = array(
+        'ts'     => time(),
+        'status' => $activate ? 'installed_and_activated' : 'installed',
+        'zip'    => $zip_url,
+    );
+    //update_option( 'oaf_wptai_replaced_plugins', $done, false );
+
+    return array('ok'=>true,'status'=>'done','error'=>null);
+}
+
+/**
+ * Batch runner. Feeds a list of replacement specs through the single-item helper.
+ * Specs: [
+ *   [
+ *     'target'   => 'plugin-dir/plugin-main.php',
+ *     'zip'      => 'https://example.com/plugin.zip',
+ *     'activate' => true,        // optional, default true
+ *     'force'    => false,       // optional, default false
+ *   ],
+ *   ...
+ * ]
+ * You can extend/override via the 'oaf_wptai_plugin_replacements' filter.
+ */
+/**
+ * Batch replace/install plugins from filtered specs.
+ * Specs via filter 'oaf_wptai_plugin_replacements':
+ * [
+ *   [ 'target' => 'dir/main.php', 'zip' => 'https://...', 'activate' => true, 'force' => false ],
+ *   ...
+ * ]
+ */
+function oaf_wptai_replace_plugins_batch() {
+    if ( ! is_admin() || ! current_user_can( 'install_plugins' ) ) return;
+
+    // Start empty; everything comes from the filter
+    $replacements = apply_filters( 'oaf_wptai_plugin_replacements', array() );
+
+     /**
+     * Filter to add/modify plugin replacements.
+     * Example to add more:
+     * add_filter('oaf_wptai_plugin_replacements', function($items){
+     *     $items[] = [
+     *         'target' => 'some-plugin/some-plugin.php',
+     *         'zip'    => 'https://example.com/some-plugin.zip',
+     *     ];
+     *     return $items;
+     * });
+     */
+
+    if ( empty( $replacements ) || ! is_array( $replacements ) ) return;
+
+    foreach ( $replacements as $item ) {
+        $target   = isset( $item['target'] )   ? trim( (string) $item['target'] )   : '';
+        $zip      = isset( $item['zip'] )      ? trim( (string) $item['zip'] )      : '';
+        $activate = isset( $item['activate'] ) ? (bool) $item['activate']           : true;
+        $force    = isset( $item['force'] )    ? (bool) $item['force']              : false;
+
+        if ( $target && $zip ) {
+            oaf_wptai_install_or_replace_plugin( $target, $zip, $activate, $force );
+        }
+    }
+}
+
+/* Example Filter 
+add_filter( 'oaf_wptai_plugin_replacements', function( $items ) {
+    $items[] = array(
+        'target'   => 'nginx-helper/nginx-helper.php',
+        'zip'      => 'https://github.com/stingray82/nginx-helper/releases/latest/download/nginx-helper.zip',
+        'activate' => true,
+        'force'    => false,
+    );
+    return $items;
+});
+*/
