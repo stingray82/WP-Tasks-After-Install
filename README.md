@@ -115,4 +115,4 @@ If you have suggestions, improvements, or automation ideas, open an Issue on Git
 ---
 
 📜 **Full Changelog:**  
-https://github.com/stingray82/WP-Tasks-After-Install/blob/main/CHANGELOG.md
+https://github.com/stingray82/WP-Tasks-After-Install/blob/main/changelog.md
