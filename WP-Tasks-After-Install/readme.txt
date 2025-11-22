@@ -1,74 +1,83 @@
 === WP Tasks After Install ===
-Contributors: oabadfol, valhallawp, ohyeahdev, fernandoaureonet
-Donate link: https://www.valhallawp.com/plugins/wp-tasks-after-install
-Tags: default content, remove, starter, installation
+Contributors: oabadfol, valhallawp, ohyeahdev, fernandoaureonet, reallyusefulplugins, stingray82
+Tags: default content, remove, starter, installation, cleanup, initialization
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Stable tag: trunk
-Requires at least: 3.0
-Tested up to: 4.9.8
+Requires at least: 6.5
+Tested up to: 6.7
+Requires PHP: 7.2
 
-A WordPress plugin that perform some necessary tasks for after WordPress install.
+A powerful automation plugin that performs essential cleanup, configuration, optimisation, and licensing tasks immediately after a fresh WordPress installation.
 
 == Description ==
-This plugin if for use only once in each WordPress installation becouse it perform this initial task just after WordPress installation:
+WP Tasks After Install automatically performs essential cleanup and setup actions immediately after installing WordPress. It is intended to run only once. After completing its tasks, it may automatically deactivate or self-delete (v2.3.1+).
 
-   * Removes the default "Hello World" post.
-   * Removes the default page "Example page".
-   * Changes the name and slug of Uncategorized default category to "Blog".
-   * Sets the permalink structure to "%/postname%/.
-   * Removes "Hello Dolly" and "Akismet" plugins.
-   * Disables comments and pings.
-   * Deletes the wp-config-sample.php file.
-   * Deletes readme.html file
-   * Delete all themes except the default one.
-   * Deactivates the plugin itself.
-   
-Note: Dont forget uninstall this plugin after finished.
-
-More information and request: https://www.oscarabadfolgueira.com/plugins/wp-tasks-after-install
+### Core Features
+* Removes default content (Hello World, Sample Page)
+* Sets permalink structure
+* Disables comments and pings
+* Deletes unnecessary files (readme.html, wp-config-sample.php)
+* Removes all non-default themes
+* Removes auto‑installed plugins (Hello Dolly, Akismet, Jetpack, Softaculous plugins, and more)
+* Configures timezone, date format, and language
+* Hides unwanted dashboard widgets
+* Supports plugin replacement system
+* Supports automatic Freemius license activation
+* Can write license constants to wp-config or GridPane user-config
+* Self-deletes when complete
 
 == Installation ==
-
-1. Visit your admin section and click Plugins -> Add New.  Then search for "WP Tasks After Install”.
-
-2. After activate, the plugin perform all tasks.
-
-3. When finished, the plugin is deactivated. Yo need to uninstall it.
-
-== Screenshots ==
+1. Install plugin
+2. Activate plugin once
+3. Plugin runs all tasks automatically
+4. Plugin deactivates or self-deletes when finished
 
 == Changelog ==
+= 2.7 =
+* Added Freemius automatic licensing system
+* Added helper architecture for future integrations
 
-= 1.1 =
-* Contributors
+= 2.6 =
+* Added plugin replacement system
 
-= 1.0 =
-* First version of plugin
+= 2.5 =
+* Added ability to write license constants
+* Added .env support
 
-= 1.0.1 =
-* Minor change in readme.txt
+= 2.4 =
+* Fixed welcome screen persistence
+* Added removal of dashboard_rediscache widget
+* Added language pack installation
 
-= 1.0.2 =
-* Added Internazionalization
+= 2.3.2 =
+* Added extra flush_rewrite_rules()
 
-= 1.0.3 =
-* Some minor changes in readme file
+= 2.3.1 =
+* Plugin now self-deletes when finished
 
-= 1.0.4 =
-* Added Spanish-Spain translation
+= 2.3 =
+* Added more Softaculous removals
+* Added disable avatars
+* Improved screen options
 
-= 1.0.5 =
-* Added deletion of readme.html file.
+= 2.2 =
+* WordPress 6.7 support
+* Removed welcome screen and pattern library
 
-= 1.0.6 =
-* Minor fixes
+= 2.1 =
+* Removed Softaculous spam plugins
 
-= 1.0.7 =
-* Add the task to remove Akismet.
+= 1.922 =
+* Removed Jetpack (InstaWP)
 
-= 1.0.8 =
-* Reguar changes.
+= 1.921 =
+* Added timezone and UK date format
 
-= 1.0.9 =
-* Minor change
+= 1.91 =
+* Added disable search engine visibility
+* Deleted Privacy Policy page
+* Changed default category
+
+= 1.0–1.9 =
+* Original plugin versions

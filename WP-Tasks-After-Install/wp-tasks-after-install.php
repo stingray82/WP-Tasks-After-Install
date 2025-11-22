@@ -5,7 +5,7 @@
  * Description:       Performs a number of necessary tasks after installing WordPress.
  * Requires at least: 6.5
  * Requires PHP:      7.4
- * Version:           2.6
+ * Version:           2.7
  * Author:            Stingray82 / Oh Yeah Devs
  * Author URI:        https://github.com/stingray82/WP-Tasks-After-Install
  * License:           GPLv2 or later
@@ -13,6 +13,7 @@
  * Text Domain:       wp-tasks-after-install
  * Website:           https://reallyusefulplugins.com
  * */
+
 
 
 
@@ -28,7 +29,11 @@ function oaf_wptai_i18n() {
 	load_plugin_textdomain( 'wp-tasks-after-install', FALSE, basename(dirname( __FILE__ ) ) . '/languages/' );
 }//end plugin_name_i18n()
 
+define( 'OAF_WPTAI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+
 add_action( 'plugins_loaded', 'oaf_wptai_i18n' );
+add_action( 'plugins_loaded', 'oaf_wptai_load_includes' );
+add_action( 'plugins_loaded', 'oaf_wptai_freemius_autoactivate' );
 
 add_action( 'admin_init', 'oaf_wptai_remove_default_post');
 add_action( 'admin_init', 'oaf_wptai_remove_default_page'); // Removed the privacy page //
@@ -48,6 +53,30 @@ add_action('init', 'oaf_wptai_disable_avatars_in_discussion_settings'); // Disab
 add_action( 'admin_init', 'oaf_wptai_write_config_constants' ); // Writes to WP Config or User Config on Gridpane
 add_action( 'admin_init', 'oaf_wptai_replace_plugins_batch', 5 ); // Batch Replace Plugins
 add_action( 'admin_init', 'oaf_wptai_deactivate_this_plugin', 999 ); // deactivate
+
+
+// Add our Helper Includes
+function oaf_wptai_load_includes() {
+    $includes = [
+        'freemius.php',
+    ];
+
+    foreach ( $includes as $file ) {
+        $file_path = OAF_WPTAI_PLUGIN_DIR . 'helper/' . $file;
+        
+        if ( file_exists( $file_path ) ) {
+            require_once $file_path;
+        } else {
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                error_log( "OAF_WPTAI: Failed to load $file_path" );
+            }
+        }
+    }
+}
+
+
+
+
 
 // Remove default post 'Hello Word'
 function oaf_wptai_remove_default_post() {
@@ -663,4 +692,45 @@ add_filter( 'oaf_wptai_plugin_replacements', function( $items ) {
     );
     return $items;
 });
+*/
+
+/**
+ * Auto-activate Freemius licenses for multiple plugins.
+ */
+function oaf_wptai_freemius_autoactivate() {
+    /**
+     * Filter: allow other code to register Freemius plugins for auto-activation.
+     *
+     * Expected format:
+     * array(
+     *     'freemius_shortcode' => 'LICENSE_KEY',
+     *     'my_prefix_fs'       => 'XXXX-XXXX-XXXX-XXXX',
+     *     'my_other_prefix_fs' => 'YYYY-YYYY-YYYY-YYYY',
+     * );
+     *
+     * The shortcode is usually the Freemius helper function name, e.g. my_prefix_fs().
+     */
+    $freemius_plugins = apply_filters( 'oaf_wptai_freemius_plugins', array() );
+
+    if ( empty( $freemius_plugins ) || ! is_array( $freemius_plugins ) ) {
+        return;
+    }
+
+    foreach ( $freemius_plugins as $fs_shortcode => $license_key ) {
+        if ( empty( $fs_shortcode ) || empty( $license_key ) ) {
+            continue;
+        }
+
+        // Only construct if the Freemius instance is actually present.
+        if ( function_exists( $fs_shortcode ) || isset( $GLOBALS[ $fs_shortcode ] ) ) {
+            new Freemius_License_Auto_Activator( $fs_shortcode, $license_key );
+        }
+    }
+}
+
+/*
+add_filter( 'oaf_wptai_freemius_plugins', function( $plugins ) {
+    $plugins['XXXX']       = 'sk_XXXXXX';
+    return $plugins;
+} ); 
 */
